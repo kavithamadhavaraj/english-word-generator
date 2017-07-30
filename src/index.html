@@ -1,0 +1,163 @@
+
+<!-- GENERATES RANDOM WORD ALONG WITH PRONUNICATION AND MEANING IF APPLICABLE -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Assignment 1">
+    <meta name="author" content="Kavitha Madhavaraj">
+
+    <title>Task 1</title>
+	
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/agency.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Kaushan+Script' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+   
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+	
+	<!-- English Word Index -->
+	<script src="js/index.js"></script>
+	
+	<!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+    <script src="js/classie.js"></script>
+    <script src="js/cbpAnimatedHeader.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="js/agency.js"></script>
+    
+    <!-- Page Specific Style -->
+    <style>
+        .historySpace{
+            font-size: 20px;
+            background-color: #fed136;  
+            height: 40px;
+            line-height: 50px;
+        }
+    </style>
+    
+    <script>
+        var queue=[]; //Initialising the Queue for history 
+        
+        /** The application includes a Dictionary API of Merrium Webster, which is to fetch the pronunciation and usage. 
+        By default, XMLHttpRequest for a Cross Domain is denied, however in order to utilise the Web Dictionary API for our application
+        we make an AJAX Request to the Yahoo API first which translates XML result fetched to JSON for access  */
+        parserAJAX = {
+        init: function (word) {
+            this.fetchJSON('http://dictionaryapi.com/api/v1/references/collegiate/xml/'+word+'?key=a4c0206e-0f5b-4d4d-9f6d-0b614611ce64');
+        },
+        fetchJSON: function (url) {
+            var root = 'https://query.yahooapis.com/v1/public/yql?q=';
+            var yql = 'select * from xml where url="' + url + '"';
+            var proxy_url = root + encodeURIComponent(yql) + '&format=json&diagnostics=false&callback=parserAJAX.display';
+            document.getElementsByTagName('body')[0].appendChild(this.jsTag(proxy_url));
+        },
+        jsTag: function (url) {
+            var script = document.createElement('script');
+            script.setAttribute('type', 'text/javascript');
+            script.setAttribute('src', url);
+            return script;
+        },
+        display: function (results) {
+			var pronunciation="",definition="",temp,i;
+			var data=results.query.results; 
+			if((data.entry_list.entry[0])&&(temp=data.entry_list.entry[0].pr)){ //Accessing the prononciation details of the word
+				if((typeof temp !== "object")&&(temp)){
+					pronunciation="<br/><br/> Say like this - "+temp; 
+				}
+			}
+			if(temp=data.entry_list.entry){
+				for(i=0;i<temp.length;i++){
+					if((temp[i].def)&&(temp[i].def.dt[0])&&(temp[i].def.dt[0].length>2)&&(typeof (temp[i].def.dt[0])!== "object")){
+						definition="<br/> Usage / Meaning - "+temp[i].def.dt[0]+"<br/><br/>"; 
+						break;
+					}
+				}
+			}
+
+			if((pronunciation=="")&&(definition=="")){
+				pronunciation="<br/><br/> Why dont you try the next word? <br/><br/>"
+			}
+			document.getElementById('dictionary').innerHTML = (results.error ? "Internal Server Error!" : pronunciation);
+			document.getElementById('dictionary').innerHTML += (results.error ? "Internal Server Error!" : definition);
+		}
+        }
+        
+        /** Adds the generated word to the history queue, whose size is chosen as 5. When the queue is full, the older word is dequeued */
+        function addToHistory(word){
+	       var i,temp;
+	       parserAJAX.init(word);
+	       queue.push(word);
+           document.getElementById('history').innerHTML="So far:<br/><br/>";
+	       document.getElementById('history').innerHTML+="<div class='historySpace'>"+queue+"</div>";
+	       if(queue.length>4)
+		      queue.shift(); // When entry exceeds the queue limit and dequeue to accomodate.
+	     }
+        
+        /** On clicking the Randomize button, clickHandler returns the random english word and add the generated word to history */
+        function clickHandler(){
+	       var word;
+	       document.getElementById('dictionary').innerHTML='';
+	       word=words(); // returns a randomly chosen english word
+	       document.getElementById('newWord').innerHTML=word;
+           addToHistory(word);
+        }   
+    </script>
+
+</head>
+
+<body id="page-top" class="index">
+    
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header page-scroll">
+                <a class="navbar-brand page-scroll" href="#page-top">Assignment 1</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="intro-text">
+			<div class="intro-heading">Random English Word Generator</div>
+                <div class="intro-lead-in">Maintains History, shows Pronunciation and Meaning !</div>
+                <a href="#display" class="page-scroll btn btn-xl">Show me </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Display Section -->
+    <section style="text-align:center" id="display">
+        <a href="#display"  onclick="clickHandler()" class="page-scroll btn btn-xl"> Randomize! </a>
+        <h2 id="newWord" >Blah Blah Blah</h2>
+        <p id="dictionary" ></p><br/><br/><br/>
+        <h2 id="history"></h2>
+    </section>
+    
+</body>
+</html>
